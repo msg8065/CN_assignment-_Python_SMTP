@@ -1,68 +1,42 @@
-import socket
+from socket import *
 
-def smtp_client(port=587, mailserver='smtp.gmail.com'):
-    msg = "\r\n My message.\r\n"
+
+def smtp_client(port=1025, mailserver='127.0.0.1'):
+    msg = "\r\n My message"
     endmsg = "\r\n.\r\n"
-    
-    clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    clientsocket.connect((mailserver, port))
-    
-    recv = clientsocket.recv(1024).decode()
-    if recv[:3] != '220':
-        print('220 reply not received from server.')
-        return
-    
+    # Create socket called clientSocket and establish a TCP connection with mailserver and port
+    clientSocket = socket(AF_INET, SOCK_STREAM)
+    clientSocket.connect((mailserver,port))
+    clientSocket.recv(1024).decode()
+    # Send HELO command
     heloCommand = 'HELO Alice\r\n'
-    clientsocket.send(heloCommand.encode())
-    recv = clientsocket.recv(1024).decode()
-    if recv[:3] != '250':
-        print('250 reply not received from server after HELO.')
-        return
-    
-    clientsocket.send('STARTTLS\r\n'.encode())
-    recv = clientsocket.recv(1024).decode()
-    if recv[:3] != '220':
-        print('220 reply not received from server after STARTTLS.')
-        return
-    
-    # Here you would typically upgrade the connection to TLS
-    # This requires additional libraries such as ssl to wrap the socket.
-    
-    mailFromCommand = 'MAIL FROM: <msg8065@nyu.edu>\r\n'
-    clientsocket.send(mailFromCommand.encode())
-    recv = clientsocket.recv(1024).decode()
-    if recv[:3] != '250':
-        print('250 reply not received from server after MAIL FROM.')
-        return
-    
-    rcptToCommand = 'RCPT TO: <manjit.msg@gmail.com>\r\n'
-    clientsocket.send(rcptToCommand.encode())
-    recv = clientsocket.recv(1024).decode()
-    if recv[:3] != '250':
-        print('250 reply not received from server after RCPT TO.')
-        return
-    
-    dataCommand = 'DATA\r\n'
-    clientsocket.send(dataCommand.encode())
-    recv = clientsocket.recv(1024).decode()
-    if recv[:3] != '354':
-        print('354 reply not received from server after DATA.')
-        return
-    
-    clientsocket.send(msg.encode())
-    clientsocket.send(endmsg.encode())
-    recv = clientsocket.recv(1024).decode()
-    if recv[:3] != '250':
-        print('250 reply not received from server after message data.')
-        return
-    
+    clientSocket.send(heloCommand.encode())
+    clientSocket.recv(1024).decode()
+    # Send MAIL FROM command
+    mailCommand = 'MAIL FROM:<from@local.host\r\n'
+    clientSocket.send(mailCommand.encode())
+    clientSocket.recv(1024).decode()
+    # Send RCPT TO command
+    rcptCommand = 'RCPT TO:<rcpt@local.host\r\n'
+    clientSocket.send(rcptCommand.encode())
+    clientSocket.recv(1024).decode()
+    # Send DATA command
+    dataCommand = 'DATA\r\n\r\n'
+    clientSocket.send(dataCommand.encode())
+    clientSocket.recv(1024).decode()
+    # Send message data
+    emailData = "Subject: TEST EMAIL\r\n" + "From: from@local.host\r\n" + "To: rcpt@local.host" + msg
+    clientSocket.send(emailData.encode())
+    # Message ends with a single period, send message end
+    clientSocket.send(endmsg.encode())
+    clientSocket.recv(1024).decode()
+    # Send QUIT command
     quitCommand = 'QUIT\r\n'
-    clientsocket.send(quitCommand.encode())
-    recv = clientsocket.recv(1024).decode()
-    if recv[:3] != '221':
-        print('221 reply not received from server after QUIT.')
-    
-    clientsocket.close()
+    clientSocket.send(quitCommand.encode())
+    clientSocket.recv(1024).decode()
+    # Close socket
+    clientSocket.close()
+
 
 if __name__ == '__main__':
-    smtp_client(587, 'smtp.gmail.com')
+    smtp_client(1025, '127.0.0.1')
